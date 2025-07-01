@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cancer Cell Detection</title>
+  <link rel="stylesheet" href="../static/style.css" />
+</head>
+<body>
+  <header class="site-header">
+  <img src="{{ url_for('static', filename='cancer-cell.png') }}" alt="Cancer Logo" class="logo" />
+  <span class="brand-name">Diagnose Cancer</span>
+</header>
+
+
+ <h1><span class="emoji"></span> Skin Cancer Detection <span class="emoji"></span></h1>
+
+
+  <div class="container">
+    <div class="section">
+      <h3>📂 Upload an Image</h3>
+      <input type="file" id="fileInput" accept="image/*" onchange="previewFile()">
+    </div>
+
+    <div class="section">
+      <h3>📸 Capture from Camera</h3>
+      <button onclick="startCamera()">Start Camera</button>
+      <button onclick="captureImage()">Capture</button><br>
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="preview-section">
+    <h3>🖼 Image Preview</h3>
+    <img id="preview" alt="Preview will appear here" />
+
+    <br><br>
+    <button onclick="uploadImage()">🔍 Predict</button>
+    <p id="result">Result will appear here.</p>
+  </div>
+
+  <script src="../static/script.js"></script>
+</body>
+</html>
