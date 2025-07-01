@@ -1,6 +1,6 @@
 Flask
 Flask-Cors
-tensorflow
+tensorflow-cpu
 numpy
 Pillow
 gdown
