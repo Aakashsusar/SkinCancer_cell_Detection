@@ -1,6 +1,7 @@
-Flask
-Flask-Cors
-tensorflow-cpu
-numpy
-Pillow
-gdown
+Flask==2.3.3
+Flask-Cors==4.0.0
+tensorflow-cpu==2.13.0
+numpy==1.24.3
+Pillow==9.5.0
+gdown==4.7.1
+
