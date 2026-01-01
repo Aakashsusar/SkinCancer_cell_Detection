@@ -1,6 +1,10 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+<<<<<<< HEAD
   background-image: url('./bg.jpg');
+=======
+  background-image: url('../bg.jpg');
+>>>>>>> 1ed7f9aba5ffe45650b8e91a4ef82833aa1cb916
   background-size: cover; /* scales image to cover the entire background */
   background-repeat: no-repeat; /* prevents repeating */
   background-position: center; /* centers the image */

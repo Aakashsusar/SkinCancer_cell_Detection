@@ -1,9 +1,12 @@
+import os
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 from flask import Flask, request, jsonify , render_template
 from flask_cors import CORS
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
-import os
 import tempfile
 import gdown
 from werkzeug.utils import secure_filename
@@ -19,11 +22,22 @@ CORS(app)
 def download_model_if_needed():
     if not os.path.exists(MODEL_PATH):
         print("Model not found locally. Downloading from Google Drive...")
-        url = f'https://drive.google.com/file/d/1hzlcYemlRXL9wxCByC4vJdR_KOGPq3MS/view?usp=sharing'
-        gdown.download(url, MODEL_PATH, quiet=False)
+        url = f'https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}'
+        gdown.download(url, MODEL_PATH, quiet=False, fuzzy=True)
 
 download_model_if_needed()
-model = load_model(MODEL_PATH)
+
+# Global variable to hold the model
+model = None
+
+def get_model():
+    """Lazy load the model only when needed"""
+    global model
+    if model is None:
+        print("Loading model... This may take a moment.")
+        model = load_model(MODEL_PATH, compile=False)
+        print("Model loaded successfully!")
+    return model
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -56,7 +70,8 @@ def predict():
 
         os.remove(tmp_path)
 
-        prediction = model.predict(img_array)
+        current_model = get_model()
+        prediction = current_model.predict(img_array)
         result = "Cancerous" if prediction[0][0] > 0.5 else "Benign"
         return jsonify({'prediction': result})
 
