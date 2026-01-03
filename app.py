@@ -4,6 +4,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from tensorflow.keras.models import load_model
+from tensorflow.keras import backend as K
 from tensorflow.keras.preprocessing import image
 import numpy as np
 import tempfile
