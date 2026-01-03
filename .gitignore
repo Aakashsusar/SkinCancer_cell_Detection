@@ -1,2 +1,4 @@
-cancer_model.h5
 *.h5
+cancer_model.h5
+data/
+dataset/
