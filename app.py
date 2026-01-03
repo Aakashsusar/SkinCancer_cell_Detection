@@ -1,5 +1,4 @@
 import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from flask import Flask, request, jsonify, render_template
@@ -8,14 +7,12 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
 import tempfile
-import gdown
-from werkzeug.utils import secure_filename
+import requests
 
 # ================= CONFIG =================
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+MODEL_URL = "https://huggingface.co/Aakashsusar123/Skin_cancer_cell/resolve/main/cancer_model.h5"
 MODEL_PATH = "cancer_model.h5"
-GOOGLE_DRIVE_FILE_ID = "1hzlcYemlRXL9wxCByC4vJdR_KOGPq3MS"
-EXPECTED_MODEL_SIZE_MB = 120  # sanity check
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
 # =========================================
 
 app = Flask(__name__)
@@ -24,55 +21,36 @@ CORS(app)
 model = None
 
 
-# ---------- MODEL DOWNLOAD ----------
-def download_model_if_needed():
+def download_model():
     if os.path.exists(MODEL_PATH):
-        size_mb = os.path.getsize(MODEL_PATH) / (1024 * 1024)
-        if size_mb > EXPECTED_MODEL_SIZE_MB:
-            print("✅ Model already present and valid")
-            return
-        else:
-            print("⚠️ Corrupted model detected. Re-downloading...")
-            os.remove(MODEL_PATH)
+        return
 
-    print("📥 Downloading model from Google Drive...")
-    url = f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}"
+    print("⬇️ Downloading model from Hugging Face...")
+    r = requests.get(MODEL_URL, stream=True)
+    r.raise_for_status()
 
-    gdown.download(
-        url,
-        MODEL_PATH,
-        quiet=False,
-        fuzzy=True
-    )
-
-    if not os.path.exists(MODEL_PATH):
-        raise RuntimeError("❌ Model download failed")
+    with open(MODEL_PATH, "wb") as f:
+        for chunk in r.iter_content(chunk_size=8192):
+            f.write(chunk)
 
     size_mb = os.path.getsize(MODEL_PATH) / (1024 * 1024)
-    if size_mb < EXPECTED_MODEL_SIZE_MB:
-        os.remove(MODEL_PATH)
-        raise RuntimeError("❌ Model download incomplete")
-
-    print(f"✅ Model downloaded successfully ({size_mb:.2f} MB)")
+    print(f"✅ Model downloaded: {size_mb:.2f} MB")
 
 
-# ---------- MODEL LOAD ----------
 def get_model():
     global model
     if model is None:
-        download_model_if_needed()
-        print("🧠 Loading TensorFlow model...")
+        download_model()
+        print("🧠 Loading model...")
         model = load_model(MODEL_PATH, compile=False)
         print("✅ Model loaded")
     return model
 
 
-# ---------- UTILS ----------
 def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-# ---------- ROUTES ----------
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -85,9 +63,6 @@ def predict():
             return jsonify({"error": "No file uploaded"}), 400
 
         file = request.files["file"]
-        if file.filename == "":
-            return jsonify({"error": "Empty file"}), 400
-
         if not allowed_file(file.filename):
             return jsonify({"error": "Invalid file type"}), 400
 
@@ -96,22 +71,20 @@ def predict():
             tmp_path = tmp.name
 
         img = image.load_img(tmp_path, target_size=(150, 150))
-        img_array = image.img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+        img = image.img_to_array(img) / 255.0
+        img = np.expand_dims(img, axis=0)
         os.remove(tmp_path)
 
         model = get_model()
-        prediction = model.predict(img_array)[0][0]
-
-        result = "Cancerous" if prediction > 0.5 else "Benign"
+        pred = model.predict(img)[0][0]
 
         return jsonify({
-            "prediction": result,
-            "confidence": round(float(prediction), 4)
+            "prediction": "Cancerous" if pred > 0.5 else "Benign",
+            "confidence": round(float(pred), 4)
         })
 
     except Exception as e:
-        print("❌ Prediction error:", str(e))
+        print("❌ Error:", e)
         return jsonify({"error": str(e)}), 500
 
 
