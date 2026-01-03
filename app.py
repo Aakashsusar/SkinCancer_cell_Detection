@@ -1,8 +1,4 @@
 import os
-import requests
-import tempfile
-import numpy as np
-
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -10,14 +6,16 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
+import numpy as np
+import tempfile
+import gdown
 from werkzeug.utils import secure_filename
 
 # ================= CONFIG =================
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 MODEL_PATH = "cancer_model.h5"
-FILE_ID = "1hzlcYemlRXL9wxCByC4vJdR_KOGPq3MS"
-DOWNLOAD_URL = "https://drive.google.com/uc?export=download"
-MIN_MODEL_MB = 50
-ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png"}
+GOOGLE_DRIVE_FILE_ID = "1hzlcYemlRXL9wxCByC4vJdR_KOGPq3MS"
+EXPECTED_MODEL_SIZE_MB = 120  # sanity check
 # =========================================
 
 app = Flask(__name__)
@@ -26,52 +24,55 @@ CORS(app)
 model = None
 
 
-def download_model():
+# ---------- MODEL DOWNLOAD ----------
+def download_model_if_needed():
     if os.path.exists(MODEL_PATH):
-        print("✅ Model already exists")
-        return
+        size_mb = os.path.getsize(MODEL_PATH) / (1024 * 1024)
+        if size_mb > EXPECTED_MODEL_SIZE_MB:
+            print("✅ Model already present and valid")
+            return
+        else:
+            print("⚠️ Corrupted model detected. Re-downloading...")
+            os.remove(MODEL_PATH)
 
-    print("⬇️ Downloading model from Google Drive (safe method)...")
+    print("📥 Downloading model from Google Drive...")
+    url = f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}"
 
-    session = requests.Session()
-    response = session.get(DOWNLOAD_URL, params={"id": FILE_ID}, stream=True)
+    gdown.download(
+        url,
+        MODEL_PATH,
+        quiet=False,
+        fuzzy=True
+    )
 
-    # Handle confirmation token
-    for key, value in response.cookies.items():
-        if key.startswith("download_warning"):
-            response = session.get(
-                DOWNLOAD_URL,
-                params={"id": FILE_ID, "confirm": value},
-                stream=True,
-            )
-
-    with open(MODEL_PATH, "wb") as f:
-        for chunk in response.iter_content(32768):
-            if chunk:
-                f.write(chunk)
+    if not os.path.exists(MODEL_PATH):
+        raise RuntimeError("❌ Model download failed")
 
     size_mb = os.path.getsize(MODEL_PATH) / (1024 * 1024)
-    print(f"📦 Model size: {size_mb:.2f} MB")
-
-    if size_mb < MIN_MODEL_MB:
+    if size_mb < EXPECTED_MODEL_SIZE_MB:
         os.remove(MODEL_PATH)
-        raise RuntimeError("❌ Model download failed (incomplete file)")
+        raise RuntimeError("❌ Model download incomplete")
+
+    print(f"✅ Model downloaded successfully ({size_mb:.2f} MB)")
 
 
+# ---------- MODEL LOAD ----------
 def get_model():
     global model
     if model is None:
-        download_model()
+        download_model_if_needed()
         print("🧠 Loading TensorFlow model...")
         model = load_model(MODEL_PATH, compile=False)
-        print("✅ Model loaded successfully")
+        print("✅ Model loaded")
     return model
 
 
+# ---------- UTILS ----------
 def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+# ---------- ROUTES ----------
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -79,36 +80,38 @@ def index():
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-
-    file = request.files["file"]
-
-    if file.filename == "":
-        return jsonify({"error": "Empty file"}), 400
-
-    if not allowed_file(file.filename):
-        return jsonify({"error": "Invalid file type"}), 400
-
     try:
+        if "file" not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+
+        file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "Empty file"}), 400
+
+        if not allowed_file(file.filename):
+            return jsonify({"error": "Invalid file type"}), 400
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
             file.save(tmp.name)
-            path = tmp.name
+            tmp_path = tmp.name
 
-        img = image.load_img(path, target_size=(150, 150))
+        img = image.load_img(tmp_path, target_size=(150, 150))
         img_array = image.img_to_array(img) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
-
-        os.remove(path)
+        os.remove(tmp_path)
 
         model = get_model()
-        pred = model.predict(img_array)
+        prediction = model.predict(img_array)[0][0]
 
-        result = "Cancerous" if pred[0][0] > 0.5 else "Benign"
-        return jsonify({"prediction": result})
+        result = "Cancerous" if prediction > 0.5 else "Benign"
+
+        return jsonify({
+            "prediction": result,
+            "confidence": round(float(prediction), 4)
+        })
 
     except Exception as e:
-        print("❌ Prediction error:", e)
+        print("❌ Prediction error:", str(e))
         return jsonify({"error": str(e)}), 500
 
 
