@@ -41,21 +41,21 @@ body::before {
   left: 30px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   z-index: 1000;
   background: rgba(0, 217, 255, 0.05);
   backdrop-filter: blur(10px);
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
   border: 1px solid rgba(0, 217, 255, 0.3);
-  box-shadow: 0 0 20px rgba(0, 217, 255, 0.2);
+  box-shadow: 0 0 15px rgba(0, 217, 255, 0.2);
 }
 
 .logo {
-  height: 45px;
-  width: 45px;
+  height: 32px;
+  width: 32px;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.6));
+  filter: drop-shadow(0 0 6px rgba(0, 217, 255, 0.5));
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -66,17 +66,22 @@ body::before {
 
 .brand-name {
   font-family: 'Segoe UI', sans-serif;
-  font-size: 20px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
-  letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(0, 217, 255, 0.8);
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 8px rgba(0, 217, 255, 0.6);
   transition: all 0.3s ease;
+}
+
+.site-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
 }
 
 .site-header:hover .brand-name {
   color: #00d9ff;
-  text-shadow: 0 0 20px rgba(0, 217, 255, 1);
+  text-shadow: 0 0 12px rgba(0, 217, 255, 1);
 }
 
 /* Main container layout */
