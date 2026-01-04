@@ -3,56 +3,91 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Skin Cancer Detection</title>
-
-  <!-- ✅ Correct static path -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <title>DERMA-SCAN AI</title>
+  <link rel="stylesheet" href="../static/style.css" />
 </head>
-
 <body>
+  <header class="site-header">
+    <img src="{{ url_for('static', filename='cancer-cell.png') }}" alt="Cancer Logo" class="logo" />
+    <span class="brand-name">DERMA-SCAN AI</span>
+  </header>
 
-<header class="site-header">
-  <img src="{{ url_for('static', filename='cancer-cell.png') }}"
-       alt="Cancer Logo"
-       class="logo" />
-  <span class="brand-name">Diagnose Cancer</span>
-</header>
+  <div class="main-container">
+    <div class="left-panel">
+      <div class="center-circle">
+        <div class="circle-glow"></div>
+        <div class="circle-content">
+          <div class="circle-text">SKIN CELL</div>
+          <div class="circle-text-sub">ANALYZER</div>
+        </div>
+      </div>
+      
+      <div class="action-button" onclick="document.getElementById('fileInput').click()">
+        <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+        <span>UPLOAD IMAGE</span>
+      </div>
+      <input type="file" id="fileInput" accept="image/*" onchange="previewFile()" style="display: none;">
+      
+      <div class="action-button" id="captureBtn" onclick="toggleCamera()">
+        <svg class="button-icon camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <span id="captureBtnText">CAPTURE IMAGE</span>
+      </div>
+      
+      <video id="video" autoplay playsinline></video>
+      <canvas id="canvas"></canvas>
+      
+      <button id="snapBtn" class="snap-button" onclick="captureImage()" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <span>SNAP PHOTO</span>
+      </button>
+    </div>
 
-<h1>🧬 Skin Cancer Detection 🧬</h1>
+    <div class="center-panel">
+      <div class="preview-box">
+        <h3>IMAGE PREVIEW</h3>
+        <div class="image-container">
+          <img id="preview" alt="Preview will appear here" />
+        </div>
+      </div>
+    </div>
 
-<div class="container">
-  <div class="section">
-    <h3>📂 Upload an Image</h3>
-    <input type="file"
-           id="fileInput"
-           accept="image/*"
-           onchange="previewFile()">
+    <div class="right-panel">
+      <div class="result-box">
+        <h3>AI DIAGNOSIS RESULT</h3>
+        <div class="result-content">
+          <p id="result">PENDING ANALYSIS...</p>
+          <div class="checkmark-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <div class="confidence-info">
+            <p>CONFIDENCE SCORE:</p>
+            <p>RECOMMENDATION:</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="section">
-    <h3>📸 Capture from Camera</h3>
-    <button type="button" onclick="startCamera()">Start Camera</button>
-    <button type="button" onclick="captureImage()">Capture</button><br>
-
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
+  <div class="bottom-section">
+    <button class="predict-button" onclick="uploadImage()">
+      <span>GET RESULT</span>
+      <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M12 5l7 7-7 7"/>
+      </svg>
+    </button>
   </div>
-</div>
 
-<div class="preview-section">
-  <h3>🖼 Image Preview</h3>
-  <img id="preview" alt="Preview will appear here"/>
-
-  <br><br>
-
-  <!-- ✅ button safety fix -->
-  <button type="button" onclick="uploadImage()">🔍 Predict</button>
-
-  <p id="result">Result will appear here.</p>
-</div>
-
-<!-- ✅ Correct JS path -->
-<script src="{{ url_for('static', filename='script.js') }}"></script>
-
+  <script src="../static/script.js"></script>
 </body>
 </html>
