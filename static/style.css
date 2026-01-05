@@ -597,10 +597,52 @@ body::before {
   background: rgba(239, 68, 68, 0.05);
 }
 
+/* ECG Line Animation */
+.ecg-container {
+  position: relative;
+  width: 100%;
+  height: 80px;
+  margin: 20px 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.ecg-line {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 8px rgba(0, 217, 255, 0.6));
+}
+
+.ecg-path {
+  animation: ecgFlow 4s linear infinite;
+  stroke-dasharray: 1200;
+  stroke-dashoffset: 1200;
+}
+
+@keyframes ecgFlow {
+  0% {
+    stroke-dashoffset: 1200;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
 /* Bottom section - Predict button */
 .bottom-section {
   text-align: center;
-  padding: 40px;
+  padding: 20px 40px 40px;
   position: relative;
   z-index: 1;
 }
